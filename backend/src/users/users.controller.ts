@@ -5,18 +5,18 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UserRole } from './entities/user.entity';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @ApiTags('Users')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.ADMIN)
 @Controller('users')
 export class UsersController {
     constructor(private readonly usersService: UsersService) { }
 
     @Post()
+    @Roles(UserRole.ADMIN)
     @ApiOperation({ summary: 'Create a new user' })
     @ApiResponse({ status: 201, description: 'User created successfully' })
     create(@Body() createUserDto: CreateUserDto) {
@@ -33,15 +33,12 @@ export class UsersController {
     @Get(':id')
     @ApiOperation({ summary: 'Get a user by ID' })
     @ApiResponse({ status: 200, description: 'User details' })
-    @ApiResponse({ status: 404, description: 'User not found' })
     findOne(@Param('id', ParseIntPipe) id: number) {
         return this.usersService.findOne(id);
     }
 
     @Patch(':id')
     @ApiOperation({ summary: 'Update a user' })
-    @ApiResponse({ status: 200, description: 'User updated successfully' })
-    @ApiResponse({ status: 404, description: 'User not found' })
     update(@Param('id', ParseIntPipe) id: number, @Body() updateUserDto: UpdateUserDto) {
         return this.usersService.update(id, updateUserDto);
     }

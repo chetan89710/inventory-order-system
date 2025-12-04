@@ -6,22 +6,52 @@ import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UsersSeed implements OnModuleInit {
-    constructor(@InjectModel(User) private userModel: typeof User) { }
+    constructor(@InjectModel(User) private readonly userModel: typeof User) { }
 
     async onModuleInit() {
-        const adminEmail = 'admin@example.com';
-        const exists = await this.userModel.findOne({ where: { email: adminEmail } });
+        await this.createUserIfNotExists(
+            'admin@example.com',
+            'Default Admin',
+            'Admin@123',
+            UserRole.ADMIN
+        );
+
+        await this.createUserIfNotExists(
+            'staff@example.com',
+            'Default Staff',
+            'Staff@123',
+            UserRole.STAFF
+        );
+
+        await this.createUserIfNotExists(
+            'customer@example.com',
+            'Default Customer',
+            'Customer@123',
+            UserRole.CUSTOMER
+        );
+    }
+
+    private async createUserIfNotExists(
+        email: string,
+        name: string,
+        plainPassword: string,
+        role: UserRole,
+    ) {
+        const exists = await this.userModel.findOne({ where: { email } });
 
         if (!exists) {
+            const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
             await this.userModel.create({
-                name: 'Default Admin',
-                email: adminEmail,
-                password: await bcrypt.hash('Admin@123', 10), // hash password
-                role: UserRole.ADMIN,
+                name,
+                email,
+                password: hashedPassword,
+                role,
             });
-            console.log('✔ Default admin created: admin@example.com / Admin@123');
+
+            console.log(`✔ ${role} created: ${email} / ${plainPassword}`);
         } else {
-            console.log('Default admin already exists');
+            console.log(`⚠ ${role} already exists: ${email}`);
         }
     }
 }
