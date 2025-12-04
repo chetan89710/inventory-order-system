@@ -11,41 +11,39 @@ import { ApiBearerAuth, ApiTags, ApiConsumes, ApiOperation, ApiResponse } from '
 
 @ApiTags('Products')
 @ApiBearerAuth()
-@Controller('products')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.ADMIN, UserRole.STAFF)
+@Controller('products')
 export class ProductsController {
     constructor(private readonly productsService: ProductsService) { }
 
     @Post()
+    @Roles(UserRole.ADMIN, UserRole.STAFF)
     @UseInterceptors(FileInterceptor('image'))
     @ApiConsumes('multipart/form-data')
     @ApiOperation({ summary: 'Create a new product' })
-    @ApiResponse({ status: 201, description: 'Product created successfully' })
     create(@Body() dto: CreateProductDto, @UploadedFile() file?: Express.Multer.File) {
         return this.productsService.create(dto, file);
     }
 
     @Get()
-    @ApiOperation({ summary: 'Get all products' })
     findAll() {
         return this.productsService.findAll();
     }
 
     @Get(':id')
-    @ApiOperation({ summary: 'Get a product by ID' })
     findOne(@Param('id', ParseIntPipe) id: number) {
         return this.productsService.findOne(id);
     }
 
     @Patch(':id')
+    @Roles(UserRole.ADMIN, UserRole.STAFF)
     @UseInterceptors(FileInterceptor('image'))
-    @ApiConsumes('multipart/form-data')
     update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateProductDto, @UploadedFile() file?: Express.Multer.File) {
         return this.productsService.update(id, dto, file);
     }
 
     @Delete(':id')
+    @Roles(UserRole.ADMIN)
     remove(@Param('id', ParseIntPipe) id: number) {
         return this.productsService.remove(id);
     }
