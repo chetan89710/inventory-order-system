@@ -14,7 +14,11 @@ export class AuthController {
     @ApiOperation({ summary: 'Login with email/password' })
     @ApiResponse({ status: 201, description: 'Login successful' })
     async login(@Body() loginUserDto: LoginUserDto) {
-        return this.authService.login(loginUserDto);
+        const user = await this.authService.validateUser(
+            loginUserDto.email,
+            loginUserDto.password,
+        );
+        return this.authService.login(user);
     }
 
     @Post('refresh')
@@ -30,9 +34,6 @@ export class AuthController {
     @ApiOperation({ summary: 'Get current logged-in user' })
     @ApiResponse({ status: 200, description: 'Returns current user info' })
     async me(@Req() req: any) {
-        return {
-            satusCode: 200,
-            data: req.user,
-        };
+        return { statusCode: 200, data: req.user };
     }
 }
