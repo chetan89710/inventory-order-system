@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, UseGuards, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -17,29 +17,32 @@ export class UsersController {
 
     @Post()
     @Roles(UserRole.ADMIN)
-    @ApiOperation({ summary: 'Create a new user' })
+    @ApiOperation({ summary: 'Create a new user (Admin only)' })
     @ApiResponse({ status: 201, description: 'User created successfully' })
     create(@Body() createUserDto: CreateUserDto) {
         return this.usersService.create(createUserDto);
     }
 
     @Get()
-    @ApiOperation({ summary: 'Get all users' })
+    @Roles(UserRole.ADMIN)
+    @ApiOperation({ summary: 'Get all users (Admin only)' })
     @ApiResponse({ status: 200, description: 'List of users' })
     findAll() {
         return this.usersService.findAll();
     }
 
     @Get(':id')
-    @ApiOperation({ summary: 'Get a user by ID' })
+    @Roles(UserRole.ADMIN)
+    @ApiOperation({ summary: 'Get a user by ID (Admin only)' })
     @ApiResponse({ status: 200, description: 'User details' })
-    findOne(@Param('id', ParseIntPipe) id: number) {
+    findOne(@Param('id') id: string) {
         return this.usersService.findOne(id);
     }
 
     @Patch(':id')
-    @ApiOperation({ summary: 'Update a user' })
-    update(@Param('id', ParseIntPipe) id: number, @Body() updateUserDto: UpdateUserDto) {
+    @Roles(UserRole.ADMIN)
+    @ApiOperation({ summary: 'Update a user (Admin only)' })
+    update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
         return this.usersService.update(id, updateUserDto);
     }
 }

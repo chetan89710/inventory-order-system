@@ -1,5 +1,5 @@
-import { Table, Column, Model, DataType, BeforeCreate } from 'sequelize-typescript';
-import * as bcrypt from 'bcryptjs';
+import { Table, Column, Model, DataType, BeforeCreate, BeforeUpdate, PrimaryKey, Default } from 'sequelize-typescript';
+import * as bcrypt from 'bcrypt';
 
 export enum UserRole {
     ADMIN = 'admin',
@@ -11,11 +11,17 @@ export interface UserCreationAttrs {
     name: string;
     email: string;
     password: string;
-    role: UserRole;
+    role?: UserRole;
 }
 
 @Table({ tableName: 'users', timestamps: true })
 export class User extends Model<User, UserCreationAttrs> {
+
+    @PrimaryKey
+    @Default(DataType.UUIDV4)
+    @Column({ type: DataType.UUID })
+    declare uuid: string;
+
     @Column({ type: DataType.STRING, allowNull: false })
     declare name: string;
 
@@ -29,8 +35,9 @@ export class User extends Model<User, UserCreationAttrs> {
     declare role: UserRole;
 
     @BeforeCreate
+    @BeforeUpdate
     static async hashPassword(user: User) {
-        if (user.password) {
+        if (user.password && !user.password.startsWith('$2b$')) {
             user.password = await bcrypt.hash(user.password, 10);
         }
     }
