@@ -1,18 +1,23 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsArray, ValidateNested } from 'class-validator';
+import { IsUUID, IsInt, Min, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class OrderItemDto {
-    @ApiProperty({ example: 1, description: 'ID of the product to order' })
-    @IsNumber()
-    productId: number;
+    @ApiProperty({
+        example: 'b36f8151-2f96-43ef-83e6-4c7fe707eb75',
+        description: 'UUID of the product to order'
+    })
+    @IsUUID()
+    productId: string;
 
     @ApiProperty({ example: 2, description: 'Quantity of the product' })
-    @IsNumber()
+    @IsInt()
+    @Min(1)
     quantity: number;
 
     @ApiProperty({ example: 100, description: 'Price per unit of the product' })
-    @IsNumber()
+    @IsInt()
+    @Min(0)
     price: number;
 }
 
@@ -20,8 +25,8 @@ export class CreateOrderDto {
     @ApiProperty({
         type: [OrderItemDto],
         example: [
-            { productId: 1, quantity: 2, price: 100 },
-            { productId: 2, quantity: 1, price: 250 },
+            { productId: 'b36f8151-2f96-43ef-83e6-4c7fe707eb75', quantity: 2, price: 100 },
+            { productId: '0bdd8d73-ec65-4d4c-bf77-ffa36b27c286', quantity: 1, price: 250 },
         ],
         description: 'List of items in the order',
     })
@@ -31,6 +36,7 @@ export class CreateOrderDto {
     items: OrderItemDto[];
 
     @ApiProperty({ example: 450, description: 'Total amount of the order' })
-    @IsNumber()
+    @IsInt()
+    @Min(0)
     totalAmount: number;
 }

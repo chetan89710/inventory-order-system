@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Order, OrderStatus } from './entities/order.entity';
 import { ProductsService } from '../products/products.service';
 import { Op } from 'sequelize';
+import { UserRole } from '../users/entities/user.entity';
 
 @Injectable()
 export class OrdersService {
@@ -15,23 +16,30 @@ export class OrdersService {
         return Array.isArray(items) ? items : JSON.parse(items);
     }
 
-    // CREATE ORDER (RESERVED)
     async create(data: any, user: any): Promise<Order> {
         const expiresAt = new Date();
         expiresAt.setMinutes(expiresAt.getMinutes() + 10);
 
         const items = this.normalizeItems(data.items);
-
-        // Validate stock for each item
-        for (const item of items) {
-            const product = await this.productsService.findOne(item.productId);
-            if (!product) throw new BadRequestException(`Product with ID ${item.productId} not found`);
-            if (product.stock < item.quantity) throw new BadRequestException(`Insufficient stock for ${product.name}`);
+        if (!items || !items.length) {
+            throw new BadRequestException('Order must have at least one item');
         }
 
+        for (const item of items) {
+            const product = await this.productsService.findOne(item.productId);
+            if (!product)
+                throw new BadRequestException(`Product with ID ${item.productId} not found`);
+            if (product.stock < item.quantity)
+                throw new BadRequestException(`Insufficient stock for ${product.name}`);
+
+            await this.productsService.updateStock(item.productId, -item.quantity);
+        }
+
+        const userId = user.uuid || user.id;
+
         const order = await this.orderModel.create({
-            userEmail: user.email.trim().toLowerCase(),
-            items: items,
+            userId,
+            items,
             totalAmount: data.totalAmount,
             status: OrderStatus.RESERVED,
             expiresAt,
@@ -40,26 +48,23 @@ export class OrdersService {
         return order;
     }
 
-    // FIND ONE ORDER BY ID
     async findOne(id: string): Promise<Order> {
-        const order = await this.orderModel.findByPk(id);
+        const order = await this.orderModel.findOne({ where: { uuid: id } });
         if (!order) throw new NotFoundException(`Order #${id} not found`);
         return order;
     }
 
-    // GET ORDERS OF LOGGED-IN USER
-    async findMyOrders(userEmail: string): Promise<Order[]> {
+    async findMyOrders(userId: string): Promise<Order[]> {
         return this.orderModel.findAll({
-            where: { userEmail: userEmail.trim().toLowerCase() },
+            where: { userId },
             order: [['createdAt', 'DESC']],
         });
     }
 
-    // CONFIRM ORDER
-    async confirm(id: string, userEmail: string): Promise<Order> {
+    async confirm(id: string, currentUser: any): Promise<Order> {
         const order = await this.findOne(id);
 
-        if (order.userEmail.trim().toLowerCase() !== userEmail.trim().toLowerCase()) {
+        if (currentUser.role === UserRole.CUSTOMER && order.userId !== currentUser.uuid) {
             throw new ForbiddenException('You can only confirm your own orders');
         }
 
@@ -72,16 +77,18 @@ export class OrdersService {
         return order;
     }
 
-    // CANCEL ORDER
-    async cancel(id: string): Promise<Order> {
+    async cancel(id: string, currentUser: any): Promise<Order> {
         const order = await this.findOne(id);
+
+        if (currentUser.role === UserRole.CUSTOMER && order.userId !== currentUser.uuid) {
+            throw new ForbiddenException('You can only cancel your own orders');
+        }
 
         if (order.status !== OrderStatus.RESERVED) {
             throw new ForbiddenException('Only reserved orders can be cancelled');
         }
 
         const items = this.normalizeItems(order.items);
-
         for (const item of items) {
             await this.productsService.updateStock(item.productId, item.quantity);
         }
@@ -91,10 +98,8 @@ export class OrdersService {
         return order;
     }
 
-    // EXPIRE ORDERS (CRON)
-    async expireOrders() {
+    async expireOrders(): Promise<number> {
         const now = new Date();
-
         const expiredOrders = await this.orderModel.findAll({
             where: {
                 status: OrderStatus.RESERVED,

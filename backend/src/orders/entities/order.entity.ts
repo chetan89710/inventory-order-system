@@ -1,5 +1,5 @@
-import { Table, Column, Model, DataType, PrimaryKey, Default } from 'sequelize-typescript';
-import { v4 as uuidv4 } from 'uuid';
+import { Table, Column, Model, DataType, PrimaryKey, Default, ForeignKey } from 'sequelize-typescript';
+import { User } from '../../users/entities/user.entity';
 
 export enum OrderStatus {
     RESERVED = 'reserved',
@@ -11,21 +11,22 @@ export enum OrderStatus {
 @Table({ tableName: 'orders' })
 export class Order extends Model<Order> {
     @PrimaryKey
-    @Default(uuidv4)
+    @Default(DataType.UUIDV4)
     @Column({ type: DataType.UUID })
-    declare id: string; // <-- use 'declare' to avoid overwriting Model.id
+    declare uuid: string;
 
-    @Column({ type: DataType.STRING, allowNull: false })
-    declare userEmail: string;
+    @ForeignKey(() => User)
+    @Column({ type: DataType.UUID, allowNull: false })
+    declare userId: string;
 
     @Column({ type: DataType.JSON, allowNull: false })
-    declare items: { productId: number; quantity: number; price: number }[];
+    declare items: { productId: string; quantity: number; price: number }[];
 
     @Column({ type: DataType.INTEGER, allowNull: false })
     declare totalAmount: number;
 
     @Column({
-        type: DataType.ENUM('reserved', 'confirmed', 'cancelled', 'expired'),
+        type: DataType.ENUM(...Object.values(OrderStatus)),
         allowNull: false,
         defaultValue: OrderStatus.RESERVED,
     })
