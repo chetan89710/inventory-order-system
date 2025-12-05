@@ -1,4 +1,3 @@
-// src/users/users.seed.ts
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { User, UserRole } from './entities/user.entity';
@@ -13,21 +12,21 @@ export class UsersSeed implements OnModuleInit {
             'admin@example.com',
             'Default Admin',
             'Admin@123',
-            UserRole.ADMIN
+            UserRole.ADMIN,
         );
 
         await this.createUserIfNotExists(
             'staff@example.com',
             'Default Staff',
             'Staff@123',
-            UserRole.STAFF
+            UserRole.STAFF,
         );
 
         await this.createUserIfNotExists(
             'customer@example.com',
             'Default Customer',
             'Customer@123',
-            UserRole.CUSTOMER
+            UserRole.CUSTOMER,
         );
     }
 
@@ -37,18 +36,14 @@ export class UsersSeed implements OnModuleInit {
         plainPassword: string,
         role: UserRole,
     ) {
-        const exists = await this.userModel.findOne({ where: { email } });
+        const exists = await this.userModel.findOne({
+            where: { email },
+            attributes: ['uuid'],
+        });
 
         if (!exists) {
             const hashedPassword = await bcrypt.hash(plainPassword, 10);
-
-            await this.userModel.create({
-                name,
-                email,
-                password: hashedPassword,
-                role,
-            });
-
+            await this.userModel.create({ name, email, password: hashedPassword, role });
             console.log(`✔ ${role} created: ${email} / ${plainPassword}`);
         } else {
             console.log(`⚠ ${role} already exists: ${email}`);
