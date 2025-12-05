@@ -1,4 +1,3 @@
-// src/products/products.module.ts
 import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { ProductsService } from './products.service';

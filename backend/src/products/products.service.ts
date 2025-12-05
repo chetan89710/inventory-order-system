@@ -13,60 +13,38 @@ export class ProductsService {
     ) { }
 
     async create(dto: CreateProductDto, file?: Express.Multer.File): Promise<Product> {
-        let imageUrl: string | undefined;
-
-        if (file) {
-            imageUrl = await this.s3Service.uploadFile(file, 'products');
-        }
-
+        const imageUrl = file ? await this.s3Service.uploadFile(file, 'products') : null;
         return this.productModel.create({ ...dto, imageUrl } as any);
     }
 
-    findAll(): Promise<Product[]> {
+    async findAll(): Promise<Product[]> {
         return this.productModel.findAll();
     }
 
-    async findOne(id: number): Promise<Product> {
-        const product = await this.productModel.findByPk(id);
+    async findOne(uuid: string): Promise<Product> {
+        const product = await this.productModel.findByPk(uuid);
         if (!product) throw new NotFoundException('Product not found');
         return product;
     }
 
-    async update(id: number, dto: UpdateProductDto, file?: Express.Multer.File): Promise<Product> {
-        const product = await this.findOne(id);
-
+    async update(uuid: string, dto: UpdateProductDto, file?: Express.Multer.File): Promise<Product> {
+        const product = await this.findOne(uuid);
         if (file) {
             product.imageUrl = await this.s3Service.uploadFile(file, 'products');
         }
-
-        await product.update(dto);
-        return product;
+        return product.update(dto);
     }
 
-    async remove(id: number) {
-        const product = await this.productModel.findByPk(id);
-
-        if (!product) {
-            throw new NotFoundException('Product not found');
-        }
-
+    async remove(uuid: string) {
+        const product = await this.findOne(uuid);
         await product.destroy();
-
-        return {
-            status: true,
-            message: 'Product deleted successfully',
-            id
-        };
+        return { status: true, message: 'Product deleted successfully', id: uuid };
     }
 
-    async updateStock(productId: number, quantityChange: number) {
-        const product = await this.findOne(productId);
+    async updateStock(productUuid: string, quantityChange: number) {
+        const product = await this.findOne(productUuid);
         product.stock += quantityChange;
-
-        if (product.stock < 0) {
-            throw new BadRequestException(`Insufficient stock for ${product.name}`);
-        }
-
+        if (product.stock < 0) throw new BadRequestException(`Insufficient stock for ${product.name}`);
         await product.save();
         return product;
     }

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
-import { Type } from 'class-transformer'; // ← import
+import { Type } from 'class-transformer';
 
 export class CreateProductDto {
     @ApiProperty({ example: 'Laptop' })
