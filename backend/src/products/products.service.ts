@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Product } from './entities/product.entity';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -43,8 +43,31 @@ export class ProductsService {
         return product;
     }
 
-    async remove(id: number): Promise<void> {
-        const product = await this.findOne(id);
+    async remove(id: number) {
+        const product = await this.productModel.findByPk(id);
+
+        if (!product) {
+            throw new NotFoundException('Product not found');
+        }
+
         await product.destroy();
+
+        return {
+            status: true,
+            message: 'Product deleted successfully',
+            id
+        };
+    }
+
+    async updateStock(productId: number, quantityChange: number) {
+        const product = await this.findOne(productId);
+        product.stock += quantityChange;
+
+        if (product.stock < 0) {
+            throw new BadRequestException(`Insufficient stock for ${product.name}`);
+        }
+
+        await product.save();
+        return product;
     }
 }

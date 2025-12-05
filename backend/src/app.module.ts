@@ -5,6 +5,10 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { User } from './users/entities/user.entity';
 import { ProductsModule } from './products/products.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { OrdersModule } from './orders/orders.module';
+
+
 
 @Module({
   imports: [
@@ -20,9 +24,11 @@ import { ProductsModule } from './products/products.module';
       autoLoadModels: true,
       synchronize: true,
     }),
+    ScheduleModule.forRoot(),
     AuthModule,
     UsersModule,
     ProductsModule,
+    OrdersModule,
   ],
 })
 export class AppModule { }

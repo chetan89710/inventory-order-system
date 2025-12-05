@@ -1,3 +1,4 @@
+// src/products/products.module.ts
 import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { ProductsService } from './products.service';
@@ -7,7 +8,8 @@ import { S3Service } from '../aws/s3/s3.service';
 
 @Module({
   imports: [SequelizeModule.forFeature([Product])],
-  providers: [ProductsService, S3Service],
   controllers: [ProductsController],
+  providers: [ProductsService, S3Service],
+  exports: [ProductsService],
 })
 export class ProductsModule { }
