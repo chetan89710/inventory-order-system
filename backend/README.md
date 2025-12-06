@@ -41,6 +41,10 @@ JWT secrets
 AWS S3 keys (if using file uploads)
 
 Database Setup
+
+Using Docker (Recommended)
+docker run --name inventory-db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=inventory_db -p 
+
 Create database:
 createdb inventory_db
 
