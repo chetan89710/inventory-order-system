@@ -5,48 +5,46 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UniqueConstraintError } from 'sequelize';
 import * as bcrypt from 'bcrypt';
-import { Op } from 'sequelize';
 
 @Injectable()
 export class UsersService {
     constructor(@InjectModel(User) private userModel: typeof User) { }
 
-    async create(createUserDto: CreateUserDto): Promise<User> {
+    async create(createUserDto: CreateUserDto) {
         try {
-            if (createUserDto.role && !Object.values(UserRole).includes(createUserDto.role)) {
+            if (createUserDto.role && !Object.values(UserRole).includes(createUserDto.role))
                 throw new HttpException('Invalid role', HttpStatus.BAD_REQUEST);
-            }
-
-            return await this.userModel.create(createUserDto);
+            const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+            const user = await this.userModel.create({ ...createUserDto, password: hashedPassword });
+            return { statusCode: HttpStatus.CREATED, message: 'User created successfully', data: user };
         } catch (error) {
-            if (error instanceof UniqueConstraintError) {
-                throw new HttpException('Email already exists', HttpStatus.CONFLICT);
-            }
-            throw new HttpException('Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
+            if (error instanceof UniqueConstraintError) throw new HttpException('Email already exists', HttpStatus.CONFLICT);
+            throw new HttpException(error.message || 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    async findByEmail(email: string): Promise<User | null> {
-        return this.userModel.findOne({ where: { email } });
+    async findByEmail(email: string) {
+        const user = await this.userModel.findOne({ where: { email } });
+        return { statusCode: HttpStatus.OK, message: 'User fetched successfully', data: user };
     }
 
-    async findAll(): Promise<User[]> {
-        return this.userModel.findAll();
+    async findAll() {
+        const users = await this.userModel.findAll();
+        return { statusCode: HttpStatus.OK, message: 'Users fetched successfully', data: users };
     }
 
-    async findOne(uuid: string): Promise<User> {
+    async findOne(uuid: string) {
         const user = await this.userModel.findByPk(uuid);
         if (!user) throw new NotFoundException('User not found');
-        return user;
+        return { statusCode: HttpStatus.OK, message: 'User fetched successfully', data: user };
     }
 
-    async update(uuid: string, updateUserDto: UpdateUserDto): Promise<User> {
-        const user = await this.findOne(uuid);
-
-        if (updateUserDto.role && !Object.values(UserRole).includes(updateUserDto.role)) {
+    async update(uuid: string, updateUserDto: UpdateUserDto) {
+        const user = (await this.findOne(uuid)).data;
+        if (updateUserDto.role && !Object.values(UserRole).includes(updateUserDto.role))
             throw new HttpException('Invalid role', HttpStatus.BAD_REQUEST);
-        }
-
-        return user.update(updateUserDto);
+        if (updateUserDto.password) updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
+        await user.update(updateUserDto);
+        return { statusCode: HttpStatus.OK, message: 'User updated successfully', data: user };
     }
 }
