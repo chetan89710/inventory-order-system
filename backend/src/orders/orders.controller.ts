@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -14,36 +14,60 @@ import { ParseUUIDPipe } from '@nestjs/common';
 @Controller('orders')
 export class OrdersController {
     constructor(private readonly ordersService: OrdersService) { }
-
     @Post()
     @Roles(UserRole.CUSTOMER)
     @ApiOperation({ summary: 'Create a new order' })
     @ApiResponse({ status: 201, description: 'Order created successfully' })
-    create(@Body() dto: CreateOrderDto, @Req() req: any) {
-        return this.ordersService.create(dto, req.user);
+    @ApiResponse({ status: 400, description: 'Invalid input data' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    async create(@Body() dto: CreateOrderDto, @Req() req: any) {
+        const order = await this.ordersService.create(dto, req.user);
+        return { data: order };
     }
 
     @Post(':id/confirm')
     @Roles(UserRole.CUSTOMER, UserRole.STAFF, UserRole.ADMIN)
-    confirm(@Param('id', new ParseUUIDPipe()) id: string, @Req() req: any) {
-        return this.ordersService.confirm(id, req.user);
+    @ApiOperation({ summary: 'Confirm an order' })
+    @ApiParam({ name: 'id', description: 'Order UUID' })
+    @ApiResponse({ status: 200, description: 'Order confirmed successfully' })
+    @ApiResponse({ status: 404, description: 'Order not found' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    async confirm(@Param('id', new ParseUUIDPipe()) id: string, @Req() req: any) {
+        const order = await this.ordersService.confirm(id, req.user);
+        return { data: order };
     }
 
     @Post(':id/cancel')
     @Roles(UserRole.CUSTOMER, UserRole.STAFF, UserRole.ADMIN)
-    cancel(@Param('id', new ParseUUIDPipe()) id: string, @Req() req: any) {
-        return this.ordersService.cancel(id, req.user);
+    @ApiOperation({ summary: 'Cancel an order' })
+    @ApiParam({ name: 'id', description: 'Order UUID' })
+    @ApiResponse({ status: 200, description: 'Order canceled successfully' })
+    @ApiResponse({ status: 404, description: 'Order not found' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    async cancel(@Param('id', new ParseUUIDPipe()) id: string, @Req() req: any) {
+        const order = await this.ordersService.cancel(id, req.user);
+        return { data: order };
     }
 
     @Get('my')
     @Roles(UserRole.CUSTOMER)
-    findMyOrders(@Req() req: any) {
-        return this.ordersService.findMyOrders(req.user.uuid);
+    @ApiOperation({ summary: 'Get orders of the logged-in customer' })
+    @ApiResponse({ status: 200, description: 'Returns customer orders' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    async findMyOrders(@Req() req: any) {
+        const orders = await this.ordersService.findMyOrders(req.user.uuid);
+        return { data: orders };
     }
 
     @Get(':id')
     @Roles(UserRole.ADMIN, UserRole.STAFF, UserRole.CUSTOMER)
-    findOne(@Param('id', new ParseUUIDPipe()) id: string) {
-        return this.ordersService.findOne(id);
+    @ApiOperation({ summary: 'Get order details by ID' })
+    @ApiParam({ name: 'id', description: 'Order UUID' })
+    @ApiResponse({ status: 200, description: 'Order details' })
+    @ApiResponse({ status: 404, description: 'Order not found' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    async findOne(@Param('id', new ParseUUIDPipe()) id: string) {
+        const order = await this.ordersService.findOne(id);
+        return { data: order };
     }
 }
