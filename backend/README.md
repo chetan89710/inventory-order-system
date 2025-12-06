@@ -1,9 +1,9 @@
 # Inventory Order System Backend
 
 ## Overview
-This is the backend service for the **Inventory Order System**, built with the NestJS framework.  
-It manages **users, products, and orders** with **role-based authentication**, JWT, and S3 file uploads.  
-Supports **Admin, Staff, and Customer** portals.
+This is the backend service for the Inventory Order Syste, built with the NestJS framework.  
+It manages users, products, and orders with role-based authentication, JWT, and S3 file uploads.  
+Supports Admin, Staff, and Customer portals.
 
 ## Table of Contents
 1. [Prerequisites](#prerequisites)
@@ -30,32 +30,26 @@ Supports **Admin, Staff, and Customer** portals.
 ```bash
 npm install
 npm install --legacy-peer-deps
+```
 
-Environment Setup
-Copy the example environment file:
-cp .env.example .env
+### Environment Setup
+1. Copy the appropriate .env file for your environment:
+   ```bash
+   cp .env.example .env
+   ```
+2. Update the environment variables as needed
 
-Update environment variables:
-Database credentials
-JWT secrets
-AWS S3 keys (if using file uploads)
-
-Database Setup
-
-Using Docker (Recommended)
+### Database Setup
+#### Using Docker (Recommended)
+```bash 
 docker run --name inventory-db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=inventory_db -p 
 
-Create database:
-createdb inventory_db
+```
 
-Run migrations:
-npx sequelize-cli db:migrate
+## Development
 
-Seed initial data:
-npx sequelize-cli db:seed:all
-
-Development
-Running the Application
+### Running the Application
+```bash
 # Development mode
 npm run start
 
@@ -64,17 +58,17 @@ npm run start:dev
 
 # Production mode
 npm run start:prod
+```
 
-Code Style and Linting
-We use ESLint and Prettier:
-# Lint the code
-npm run lint
+### Code Style and Linting
+- We use ESLint and Prettier for code formatting
+- Run linting: `npm run lint`
+- Fix linting issues: `npm run lint:fix`
 
-# Fix linting issues automatically
-npm run lint:fix
-Database Management
+## Database Management
 
-Migrations
+### Migration Commands
+```bash
 # Create a new migration
 npx sequelize-cli migration:generate --name create-table-name
 
@@ -86,15 +80,19 @@ npx sequelize-cli db:migrate:undo
 
 # Undo all migrations
 npx sequelize-cli db:migrate:undo:all
+```
 
-Seeding
+### Seeding Data
+```bash
 # Run all seeders
 npx sequelize-cli db:seed:all
 
 # Run specific seeder
 npx sequelize-cli db:seed --seed YYYYMMDDHHMMSS-seeder-name.js
+```
 
-Testing
+## Testing
+```bash
 # Unit tests
 npm run test
 
@@ -103,19 +101,10 @@ npm run test:e2e
 
 # Test coverage
 npm run test:cov
+```
 
-Deployment
-You can deploy on any Node.js hosting platform (AWS, Heroku, DigitalOcean).
-Build production bundle:
-npm run build
-npm run start:prod
-
-API Documentation
-Swagger documentation is available at http://localhost:3000/api/docs when running in development mode.
-
-API endpoints are documented using OpenAPI/Swagger decorators.
-
-Project Structure
+## Project Structure
+```
 backend/
 ├─ src/
 │  ├─ auth/        # JWT authentication & refresh tokens
@@ -130,20 +119,23 @@ backend/
 ├─ .env            # Environment variables
 ├─ package.json
 └─ README.md
+```
 
-Contributing Guidelines
+## API Documentation
+- Swagger documentation is available at http://localhost:3000/api/docs when running in development mode.
+- API endpoints are documented using OpenAPI/Swagger decorators.
 
-Create a new branch for each feature/bugfix
-Follow coding standards and naming conventions
-Write unit tests for new features
-Update documentation as needed
-Submit pull requests for review
+## Contributing Guidelines
+1. Create a new branch for each feature/bugfix
+2. Follow coding standards and naming conventions
+3. Write unit tests for new features
+4. Update documentation as needed
+5. Submit pull requests for review
 
-Support and Resources
-NestJS Documentation
-Sequelize Documentation
-AWS S3 Documentation
-Internal team documentation (contact project lead)
+## Support and Resources
+- [NestJS Documentation](https://docs.nestjs.com)
+- [Sequelize Documentation](https://sequelize.org)
+- Internal team documentation (contact team lead)
 
-License
-MIT licensed
+## License
+[MIT licensed](LICENSE)
