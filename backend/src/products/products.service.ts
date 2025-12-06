@@ -7,45 +7,43 @@ import { S3Service } from '../aws/s3/s3.service';
 
 @Injectable()
 export class ProductsService {
-    constructor(
-        @InjectModel(Product) private productModel: typeof Product,
-        private readonly s3Service: S3Service,
-    ) { }
+    constructor(@InjectModel(Product) private productModel: typeof Product, private readonly s3Service: S3Service) { }
 
-    async create(dto: CreateProductDto, file?: Express.Multer.File): Promise<Product> {
+    async create(dto: CreateProductDto, file?: Express.Multer.File) {
         const imageUrl = file ? await this.s3Service.uploadFile(file, 'products') : null;
-        return this.productModel.create({ ...dto, imageUrl } as any);
+        const product = await this.productModel.create({ ...dto, imageUrl } as any);
+        return { statusCode: 201, message: 'Product created successfully', data: product };
     }
 
-    async findAll(): Promise<Product[]> {
-        return this.productModel.findAll();
+    async findAll() {
+        const products = await this.productModel.findAll();
+        return { statusCode: 200, message: 'Products fetched successfully', data: products };
     }
 
-    async findOne(uuid: string): Promise<Product> {
+    async findOne(uuid: string) {
         const product = await this.productModel.findByPk(uuid);
         if (!product) throw new NotFoundException('Product not found');
-        return product;
+        return { statusCode: 200, message: 'Product fetched successfully', data: product };
     }
 
-    async update(uuid: string, dto: UpdateProductDto, file?: Express.Multer.File): Promise<Product> {
-        const product = await this.findOne(uuid);
-        if (file) {
-            product.imageUrl = await this.s3Service.uploadFile(file, 'products');
-        }
-        return product.update(dto);
+    async update(uuid: string, dto: UpdateProductDto, file?: Express.Multer.File) {
+        const product = (await this.findOne(uuid)).data;
+        if (file) product.imageUrl = await this.s3Service.uploadFile(file, 'products');
+        await product.update(dto);
+        return { statusCode: 200, message: 'Product updated successfully', data: product };
     }
 
     async remove(uuid: string) {
-        const product = await this.findOne(uuid);
+        const product = (await this.findOne(uuid)).data;
         await product.destroy();
-        return { status: true, message: 'Product deleted successfully', id: uuid };
+        return { statusCode: 200, message: 'Product deleted successfully', data: { id: uuid } };
     }
 
     async updateStock(productUuid: string, quantityChange: number) {
-        const product = await this.findOne(productUuid);
+        const product = (await this.findOne(productUuid)).data;
         product.stock += quantityChange;
         if (product.stock < 0) throw new BadRequestException(`Insufficient stock for ${product.name}`);
         await product.save();
-        return product;
+        return { statusCode: 200, message: 'Stock updated successfully', data: product };
     }
 }
